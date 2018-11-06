@@ -35,6 +35,6 @@ app.get('/', function (req, res) {
     console.log('📤 Articles sent successfully')
 })
 
-app.listen()
-console.log('🚀 Server started on port 80')
+app.listen(PORT)
+console.log('🚀 Server started on port', PORT)
 exports = module.exports = app
