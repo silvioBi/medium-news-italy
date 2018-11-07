@@ -87,15 +87,14 @@ let getArticles = callback => {
 
                 // We just get the description for this, more in depth details can be found navigating to the linl
                 article.mainText = data.next().children().first().text()
-                if (!article.mainText) article.mainText = 'Utilizza il link per leggere l\'articolo completo'
 
                 // Similar approach is taken for the article link, it is almost always the first child, sometimes
                 // it is in the containing div
                 article.redirectionUrl = data.children().first().attr('href')
                 if (!article.redirectionUrl) article.redirectionUrl = data.parent().attr('href')
 
-                // Finally let's add the article to our news array
-                articles.push(article)
+                // Finally let's add the article to our news array only if it has some text content
+                if (article.mainText) articles.push(article)
             })
             console.error('📥 Updated articles! %s new articles', articles.length)
             callback(articles)
