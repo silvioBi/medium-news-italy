@@ -52,7 +52,10 @@ const queryArticlesDb = async (queryObject, insertingArticle, callback) => {
                     redirectionUrl: row[4], // Provides the URL target for the Read More link in the Alexa app.
                 }))
         client.release()
-        if (callback) callback(articles)
+        if (callback) {
+            console.error('📥 Got %s from db', articles.length)
+            callback(articles)
+        }
     } catch (err) {
         console.error('🚨 Error! ', err)
     }
@@ -104,6 +107,7 @@ let getArticles = callback => {
                 // Finally let's add the article to our news array
                 articles.push(article)
             })
+            console.error('📥 Updated articles! New articles are ', articles)
             callback(articles)
         }
     })
@@ -131,11 +135,13 @@ setInterval(updateArticles, refreshRate)
 app.get('/', function (req, res) {
     // Header necessary to let Alexa know the format we are providing the feeds
     res.setHeader('Content-Type', 'application/json')
-    let getArticlesCallback = articles => res.send(JSON.stringify(articles))
+    let getArticlesCallback = articles => {
+        res.send(JSON.stringify(articles))
+        console.log('📤 Articles sent successfully')
+    }
     // Get all the articles and pass the above callback to send them as response
     // once the query is terminated
     queryArticlesDb(getAllArticlesQuery, null, getArticlesCallback)
-    console.log('📤 Articles sent successfully')
 })
 
 app.listen(PORT)
