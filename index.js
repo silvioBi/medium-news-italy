@@ -1,13 +1,70 @@
 const express = require('express')
 const request = require('request')
 const cheerio = require('cheerio')
-const uuidv1 = require('uuid/v1');
+const uuidv1 = require('uuid/v1')
+const { Pool } = require('pg')
+
+// Server port
 const PORT = process.env.PORT || 80
 
+// Express
 let app = express()
 
-let getNews = callback => {
-    let news = [] // This should be stored in a db and retrieved once in a while in production
+// DB Postgres
+// The db contains only one table, which can be created with the following query:
+// create table articles (uid text, updateDate text, titleText text, mainText text, redirectionUrl text )
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+})
+
+// Queries
+// Insert new articles query
+const insertNewArticleQuery = article => ({
+    text: 'INSERT INTO users(name, email) VALUES($1, $2, $3, $4, $5)',
+    values: [article.uid, article.updateDate, article.titleText, article.mainText, article.redirectionUrl],
+})
+// Delete old articles query
+const deleteAllArticlesQuery = 'DELETE FROM articles'
+// Get all articles query
+const getAllArticlesQuery = 'SELECT * FROM articles'
+
+/**
+ * @description Launches the correspondent query, the query may be one of insertNewArticleQuery | deleteAllArticlesQuery | getAllArticlesQuery
+ * @param {object} queryObject The query to be launched
+ * @param {object} [insertingArticle] Whether we are inserting an article
+ * @param {function} callback A callback which handles the list of articles in the format supported Alexa 
+ */
+const queryArticlesDb = async (queryObject, insertingArticle, callback) => {
+    try {
+        const client = await pool.connect()
+        // If insertingArticle it means we are adding an article, in the other cases we are just 
+        // getting or deleting everything
+        const result = await client.query(queryObject)
+        // Parse the articles in a more convenient format only if we were not adding an article
+        let articles = insertingArticle ? null :
+            !result ? [] : // If there is a result
+                result.rows.map(row => ({
+                    uid: row[0], // The unique id of the feed
+                    updateDate: row[1], // In the format yyyy-MM-dd'T'HH:mm:ss'.0Z' 2016-04-10T00:00:00.0Z
+                    titleText: row[2], // The title of the article
+                    mainText: row[3],  // The text that Alexa reads to the user
+                    redirectionUrl: row[4], // Provides the URL target for the Read More link in the Alexa app.
+                }))
+        client.release()
+        if (callback) callback(articles)
+    } catch (err) {
+        console.error('🚨 Error! ', err)
+    }
+}
+
+/** 
+ * @description Crawl Medium Italia to get the last articles
+ * @param {function} callback A callback which handles the return value
+ * @returns {list} A list of articles in the format supported Alexa 
+ * */
+let getArticles = callback => {
+    let articles = [] // This should be stored in a db and retrieved once in a while in production
     let url = 'https://medium.com/italia'
     request(url, (err, res, html) => {
         if (!err) {
@@ -43,20 +100,40 @@ let getNews = callback => {
                 // it is in the containing div
                 article.redirectionUrl = data.children().first().attr('href')
                 if (!article.redirectionUrl) article.redirectionUrl = data.parent().attr('href')
-                
+
                 // Finally let's add the article to our news array
-                news.push(article)
+                articles.push(article)
             })
-            callback(news)
+            callback(articles)
         }
     })
 }
+/** 
+ * @description Crawl Medium to get the new articles and update the db removing the old ones and adding 
+ * the new ones
+ * */
+const updateArticles = () => {
+    queryArticlesDb(deleteAllArticlesQuery) // First delete all old articles
+    let insertNewArticlesCallback = articles =>
+        articles.map(article =>
+            // For each article we get the correspondent query to insert it and 
+            // we say to queryArticlesDb that we are insering an article
+            queryArticlesDb(insertNewArticleQuery(article), true))
+    getArticles(insertNewArticlesCallback)
+}
 
+// Periodically update the articles forever
+let refreshRate = 1000 * 60 * 60 // One hour
+setInterval(updateArticles, refreshRate)
+
+// The endpoint
 app.get('/', function (req, res) {
     // Header necessary to let Alexa know the format we are providing the feeds
     res.setHeader('Content-Type', 'application/json')
-    let sendCallback = payload => res.send(JSON.stringify(payload))
-    getNews(sendCallback)
+    let getArticlesCallback = articles => res.send(JSON.stringify(articles))
+    // Get all the articles and pass the above callback to send them as response
+    // once the query is terminated
+    queryArticlesDb(getAllArticlesQuery, null, getArticlesCallback)
     console.log('📤 Articles sent successfully')
 })
 

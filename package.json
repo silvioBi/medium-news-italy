@@ -2,13 +2,19 @@
   "name": "medium-news-italy",
   "version": "0.1.0",
   "description": "Simple app to get the updated italian Medium news",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/silvioBi/medium-news-italy"
+  },
   "engines": {
-    "node": "10.x"
+    "node": "10.x",
+    "npm": "6.4.x"
   },
   "main": "index.js",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "express": "^4.16.4",
+    "pg": "^7.6.0",
     "request": "^2.88.0",
     "uuid": "^3.3.2"
   },
@@ -19,7 +25,8 @@
   "keywords": [
     "node",
     "heroku",
-    "express"
+    "express",
+    "medium"
   ],
   "license": "ISC",
   "author": "Silvio Biasiol"
