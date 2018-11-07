@@ -44,6 +44,7 @@ const queryArticlesDb = async (queryObject, insertingArticle, callback) => {
         // Parse the articles in a more convenient format only if we were not adding an article
         let articles = insertingArticle ? null :
             !result ? [] : // If there is a result
+            console.log('result.rows',result.rows)
                 result.rows.map(row => ({
                     uid: row[0], // The unique id of the feed
                     updateDate: row[1], // In the format yyyy-MM-dd'T'HH:mm:ss'.0Z' 2016-04-10T00:00:00.0Z
