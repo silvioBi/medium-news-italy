@@ -22,7 +22,7 @@ const pool = new Pool({
 // Queries
 // Insert new articles query
 const insertNewArticleQuery = article => ({
-    text: 'INSERT INTO articles(uid, updateDate, titleText, mainText, redirectionUrl) VALUES($1, $2, $3, $4, $5)',
+    text: 'INSERT INTO articles("uid", "updateDate", "titleText", "mainText", "redirectionUrl") VALUES($1, $2, $3, $4, $5)',
     values: [article.uid, article.updateDate, article.titleText, article.mainText, article.redirectionUrl],
 })
 // Delete old articles query
