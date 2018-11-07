@@ -43,21 +43,9 @@ const queryArticlesDb = async (queryObject, insertingArticle, callback) => {
         // getting or deleting everything
         const result = await client.query(queryObject)
         // Parse the articles in a more convenient format only if we were not adding an article
-        let articles = insertingArticle ? null :
-            !result ? [] : // If there is a result
-                console.log('result.rows', result.rows)
-        result.rows.map(row => ({
-            uid: row[0], // The unique id of the feed
-            updateDate: row[1], // In the format yyyy-MM-dd'T'HH:mm:ss'.0Z' 2016-04-10T00:00:00.0Z
-            titleText: row[2], // The title of the article
-            mainText: row[3],  // The text that Alexa reads to the user
-            redirectionUrl: row[4], // Provides the URL target for the Read More link in the Alexa app.
-        }))
+        let articles = insertingArticle ? null : !result ? [] : result.rows
         client.release()
-        if (callback) {
-            if (DEBUG) console.error('📥 Got %s from db', articles.length)
-            callback(articles)
-        }
+        if (callback) callback(articles)
     } catch (err) {
         console.error('🚨 Error! ', err)
     }
