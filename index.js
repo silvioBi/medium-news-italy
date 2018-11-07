@@ -13,7 +13,7 @@ let app = express()
 
 // DB Postgres
 // The db contains only one table, which can be created with the following query:
-// create table articles (uid text, updateDate text, titleText text, mainText text, redirectionUrl text )
+// create table articles ("uid" text, "updateDate" text, "titleText" text, "mainText" text, "redirectionUrl" text );
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: true
@@ -44,6 +44,18 @@ const queryArticlesDb = async (queryObject, insertingArticle, callback) => {
         const result = await client.query(queryObject)
         // Parse the articles in a more convenient format only if we were not adding an article
         let articles = insertingArticle ? null : !result ? [] : result.rows
+        // Since the keys are case-sensitive for Alexa and Postgres rename them
+        articles.map(article => {
+            article.updateDate = article.updatedate
+            delete article.updatedate
+            article.titleText = article.titletext
+            delete article.titletext
+            article.mainText = article.maintext
+            delete article.maintext
+            article.redirectionUrl = article.redirectionurl
+            delete article.redirectionurl
+        })
+
         client.release()
         if (callback) callback(articles)
     } catch (err) {
