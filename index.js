@@ -124,6 +124,7 @@ const updateArticles = () => {
 
 // Periodically update the articles forever
 let refreshRate = 1000 * 60 * 60 // One hour
+updateArticles() // Launch manually the first time
 setInterval(updateArticles, refreshRate)
 
 // The endpoint
