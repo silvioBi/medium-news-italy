@@ -4,8 +4,9 @@ const cheerio = require('cheerio')
 const uuidv1 = require('uuid/v1')
 const { Pool } = require('pg')
 
-// Server port
+// Enviroment variables
 const PORT = process.env.PORT || 80
+const DEBUG = process.env.DEBUG || false
 
 // Express
 let app = express()
@@ -44,17 +45,17 @@ const queryArticlesDb = async (queryObject, insertingArticle, callback) => {
         // Parse the articles in a more convenient format only if we were not adding an article
         let articles = insertingArticle ? null :
             !result ? [] : // If there is a result
-            console.log('result.rows',result.rows)
-                result.rows.map(row => ({
-                    uid: row[0], // The unique id of the feed
-                    updateDate: row[1], // In the format yyyy-MM-dd'T'HH:mm:ss'.0Z' 2016-04-10T00:00:00.0Z
-                    titleText: row[2], // The title of the article
-                    mainText: row[3],  // The text that Alexa reads to the user
-                    redirectionUrl: row[4], // Provides the URL target for the Read More link in the Alexa app.
-                }))
+                console.log('result.rows', result.rows)
+        result.rows.map(row => ({
+            uid: row[0], // The unique id of the feed
+            updateDate: row[1], // In the format yyyy-MM-dd'T'HH:mm:ss'.0Z' 2016-04-10T00:00:00.0Z
+            titleText: row[2], // The title of the article
+            mainText: row[3],  // The text that Alexa reads to the user
+            redirectionUrl: row[4], // Provides the URL target for the Read More link in the Alexa app.
+        }))
         client.release()
         if (callback) {
-            console.error('📥 Got %s from db', articles.length)
+            if (DEBUG) console.error('📥 Got %s from db', articles.length)
             callback(articles)
         }
     } catch (err) {
@@ -108,7 +109,7 @@ let getArticles = callback => {
                 // Finally let's add the article to our news array
                 articles.push(article)
             })
-            console.error('📥 Updated articles! New articles are ', articles)
+            console.error('📥 Updated articles! %s new articles', articles.length)
             callback(articles)
         }
     })
