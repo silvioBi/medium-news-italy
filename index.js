@@ -8,13 +8,12 @@ let app = express()
 let getNews = callback => {
     let news = []
     let url = 'https://medium.com/italia'
-    request(url, function (error, response, html) {
+    request(url, (error, response, html) => {
         if (!error) {
             let $ = cheerio.load(html)
-            let article = { title: null, link: null }
-            $('h3').filter(function () {
-                // Let's store the data we filter into a variable so we can easily see what's going on.
-                let data = $(this)
+            $('h3').each((i, el) => {
+                let data = $(el)
+                let article = { title: null, link: null }
                 // In examining the DOM we notice that the title rests within the first child element of the h3 tag. 
                 // Utilizing jQuery we can easily navigate and get the text by writing the following code:
                 article.title = data.children().first().text()
