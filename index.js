@@ -37,6 +37,7 @@ let getNews = callback => {
 
                 // We just get the description for this, more in depth details can be found navigating to the linl
                 article.mainText = data.next().children().first().text()
+                if (!article.mainText) article.mainText = 'Utilizza il link per leggere l\'articolo completo'
 
                 // Similar approach is taken for the article link, it is almost always the first child, sometimes
                 // it is in the containing div
